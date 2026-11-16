@@ -104,7 +104,8 @@ class OperationsTests(unittest.TestCase):
         self.work.register(key="partners", fmt="html", kind="partnership")
         self.work.ingest()
         self.work.ingest(key="campus", fmt="csv", pages=[[record(record_id="cohort-1", title="AI Master's Program")]])
-        self.work.ingest(key="partners", fmt="html", pages=[[record(record_id="joint-1", title="Joint Research Lab")]])
+        self.work.ingest(key="partners", fmt="html", pages=[[record(record_id="joint-1", title="Joint Research Lab",
+                                                                    reference="company:role-1")]])
         current = Delivery(self.work.ledger).current()
         self.assertEqual(current["counts"]["accepted"], 3)
         kinds = {entity["record"]["kind"] for entity in current["accepted"]}
@@ -256,7 +257,7 @@ class OperationsTests(unittest.TestCase):
     def test_cli_parser_supports_registered_commands(self):
         actions = ["audit", "operations", "sources", "quality", "recovery", "consistency",
                    "database-info", "checkpoint", "distribution", "coverage", "trend",
-                   "conflicts", "health", "summary", "current", "history", "events"]
+                   "conflicts", "promises", "health", "summary", "current", "history", "events"]
         for action in actions:
             with self.subTest(action=action):
                 parsed = parser().parse_args(["--db", str(self.work.path / "state.sqlite3"), action])

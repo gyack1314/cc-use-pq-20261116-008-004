@@ -20,6 +20,15 @@ IDENT = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 HEX = re.compile(r"^[a-f0-9]{64}$")
 FORMATS = {"json", "csv", "html"}
 KINDS = {"position", "program", "partnership"}
+CITATION = re.compile(r"^([a-z][a-z0-9_-]{1,63}):([a-z][a-z0-9_-]{1,63})$")
+
+
+def parse_citation(reference: str) -> tuple[str, str] | None:
+    """Parse a verifiable ``source:record`` citation; None when malformed."""
+    match = CITATION.fullmatch(reference)
+    if match is None:
+        return None
+    return match.group(1), match.group(2)
 
 
 def identifier(value: Any, field: str) -> str:

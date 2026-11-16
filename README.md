@@ -25,7 +25,9 @@ ingest 对失败页返回非零退出码，并将原因保存在数据库。修�
 
 批次清单 JSON 包含 source、batch、带时区的 captured_at，以及顺序从 1 开始的 pages。每页包含相对 path 和对文件原始字节计算的 SHA-256。文件须位于清单目录下，UTF-8 编码，每页最多 2 MB，最多 10,000 条记录。JSON 页可用记录数组或 records 对象字段；CSV 的第一行为表头；HTML 页使用一个简单表格的首行作为表头。
 
-每条记录需要 record_id、organization、title、region、discipline、quantity、published_at（YYYY-MM-DD）；reference 与 description 可选。数量为非负整数，零数量、未来发布日期、低可信来源和缺少明确引用的合作项目会被隔离。基础实体键由类别、机构、标题和地区确定；相同实体的不同来源若数量、学科或发布日期不一致，会列入争议而非当前可用数据。实体键是精确规范化后的匹配，不做模糊别名判断。
+每条记录需要 record_id、organization、title、region、discipline、quantity、published_at（YYYY-MM-DD）；reference 与 description 可选。数量为非负整数，零数量、未来发布日期、低可信来源和缺少明确引用或引用格式错误的合作项目会被隔离。基础实体键由类别、机构、标题和地区确定；相同实体的不同来源若数量、学科或发布日期不一致，会列入争议而非当前可用数据。实体键是精确规范化后的匹配，不做模糊别名判断。
+
+校企联合培养项目（partnership）的 reference 必须是可核验的来源引用，格式为 `来源键:记录编号`，指向某个 position 来源中的岗位记录。缺少引用（project_reference_missing）或引用格式错误（project_reference_invalid）的项目会被隔离；引用合法的项目记录本身有效，即使对应岗位页尚未采入。岗位编号按来源加记录编号定位并核对机构一致性，不同企业使用相同岗位编号不会串线。承诺核对（promises 命令）按现行岗位证据推导每条承诺的状态，不落地存储、随证据变化自动更新：岗位有效且机构与承诺名额一致为已核实（verified）；岗位被其他来源争议（target_disputed）、名额与承诺不一致（quantity_mismatch）、机构不一致（organization_mismatch）或引用的不是岗位记录（target_not_position）为矛盾（conflicted）；岗位暂缺（target_missing）、岗位质量不合格被隔离（target_quarantined）或岗位来源已撤回（target_withdrawn）为待证（pending）。待证与矛盾的承诺保留原始承诺名额，不计为零岗位；项目的原始承诺与每次修订版本都保留在观测历史中。失败页重试不会重复计承诺。
 
 ## 查询与运维
 
@@ -33,6 +35,7 @@ ingest 对失败页返回非零退出码，并将原因保存在数据库。修�
 - history、trace IDENTITY、record SOURCE ID、timeline SOURCE、batch-evidence SOURCE BATCH 追踪来源与修订。
 - status SOURCE BATCH、operations、recovery、quality、audit 检查页级恢复和数据状态。
 - summary、distribution、coverage、age YYYY-MM-DD、trend 和 conflicts 提供当前与历史摘要。
+- promises 核对校企合作承诺与现行岗位证据的引用关系，列出每条承诺的状态（已核实、矛盾、待证）、理由和承诺名额汇总。
 - snapshot FILE 写出当前视图与摘要；verify FILE SHA256 校验交付字节。
 - preview SOURCE_JSON MANIFEST 在不登记批次的情况下检查本地文件；replay-check MANIFEST 对已完成批次复核原始镜像；checkpoint 读取游标快照。
 

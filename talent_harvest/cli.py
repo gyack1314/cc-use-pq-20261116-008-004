@@ -16,6 +16,7 @@ from .analytics import Analytics
 from .export import Delivery, verify_snapshot
 from .ledger import Ledger
 from .pipeline import Harvester
+from .promises import PromiseReview
 
 
 def parser() -> ArgumentParser:
@@ -83,6 +84,7 @@ def parser() -> ArgumentParser:
     age.add_argument("reference_date")
     actions.add_parser("trend", help="summarize capture months")
     actions.add_parser("conflicts", help="summarize active disputes")
+    actions.add_parser("promises", help="review partnership promises against position evidence")
     actions.add_parser("health", help="show delivery readiness")
     events = actions.add_parser("events", help="show event history")
     events.add_argument("--source")
@@ -171,6 +173,8 @@ def execute(args: Namespace) -> dict:
             return Analytics(ledger).trend()
         if args.action == "conflicts":
             return Analytics(ledger).conflict_report()
+        if args.action == "promises":
+            return PromiseReview(ledger).review()
         if args.action == "health":
             return Analytics(ledger).delivery_health()
         if args.action == "events":

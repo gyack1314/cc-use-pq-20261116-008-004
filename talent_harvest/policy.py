@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from .contracts import Record, Source
+from .contracts import Record, Source, parse_citation
 
 
 @dataclass(frozen=True)
@@ -19,8 +19,11 @@ def assess(record: Record, source: Source, captured_at: str) -> Decision:
     reasons: list[str] = []
     if record.quantity == 0:
         reasons.append("zero_quantity")
-    if record.kind == "partnership" and record.reference.startswith(source.key + ":"):
-        reasons.append("project_reference_missing")
+    if record.kind == "partnership":
+        if record.reference.startswith(source.key + ":"):
+            reasons.append("project_reference_missing")
+        elif parse_citation(record.reference) is None:
+            reasons.append("project_reference_invalid")
     if source.trust < 20:
         reasons.append("low_trust_source")
     if date.fromisoformat(record.published_at) > date.fromisoformat(captured_at[:10]):
